@@ -1,4 +1,4 @@
 #!/bin/bash
 set -e
-npm build
+npm run build
 git add .
