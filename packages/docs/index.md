@@ -8,11 +8,11 @@ hero:
   tagline: Set of reusable code for js projects
   actions:
     - theme: brand
-      text: Markdown Examples
-      link: /markdown-examples
+      text: Get started
+      link: /features/object-helper/
     - theme: alt
-      text: API Examples
-      link: /api-examples
+      text: Github
+      link: https://github.com/nulltype-dev/commons-js
 
 features:
   - title: Object helper

@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+set -e
+export BASE_URL=/commons-js/
+npm run -w @nulltype/commons-js-docs docs:build
+cd packages/docs/.vitepress/dist
+git init
+git add -A
+git commit -m 'deploy'
+git push -f git@github.com:nulltype-dev/commons-js.git master:gh-pages
+cd -

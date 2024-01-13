@@ -23,5 +23,6 @@ export default defineConfig({
     socialLinks: [
       { icon: 'github', link: 'https://github.com/nulltype-dev/commons-js' }
     ]
-  }
+  },
+  base: process.env.BASE_URL
 })

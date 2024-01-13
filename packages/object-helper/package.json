@@ -16,5 +16,9 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "homepage": "https://nulltype-dev.github.io/commons-js/features/object-helper",
+  "files": [
+    "./dist"
+  ]
 }

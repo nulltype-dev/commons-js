@@ -2,9 +2,15 @@
 
 Simple event emitter with typehinting.
 
+## Installation
+
+```bash
+npm i @nulltype/event-emitter
+```
+
 ## Defining emitter types
 
-1. When creating emitter instance
+1. When creating emitter instance:
 
 ```ts
 import { EventEmitter } from '@nulltype/event-emitter'
@@ -15,7 +21,7 @@ const emitter = new EventEmitter<{
 }>()
 ```
 
-2. Or by extending `EventEmitter` class
+2. Or by extending `EventEmitter` class:
 
 ```ts
 import { EventEmitter } from '@nulltype/event-emitter'

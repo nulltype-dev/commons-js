@@ -2,6 +2,12 @@
 
 Functions for working with objects
 
+## Installation
+
+```bash
+npm i @nulltype/object-helper
+```
+
 ## has
 
 Calls `Object.prototype.hasOwnProperty` ensuring that the prop is member of object.
