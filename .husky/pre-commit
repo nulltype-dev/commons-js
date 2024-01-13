@@ -1,0 +1,4 @@
+#!/bin/bash
+set -e
+npm build
+git add .

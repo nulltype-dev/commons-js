@@ -1,0 +1,20 @@
+{
+  "name": "@nulltype/object-helper",
+  "version": "1.0.0",
+  "description": "Object helper functions",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "typings": "dist/index.d.ts",
+  "scripts": {
+    "test": "vitest --run",
+    "test:watch": "vitest",
+    "lint": "eslint . --ext .ts,.cjs,.mjs && tsc --noEmit",
+    "dev": "rollup -c rollup.config.mjs -w",
+    "prebuild": "npm run lint && npm run test && rm -rf dist",
+    "build": "rollup -c rollup.config.mjs",
+    "prepublish": "npm run lint && rm -rf dist && npm run build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
