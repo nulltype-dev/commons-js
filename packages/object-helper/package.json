@@ -1,6 +1,6 @@
 {
   "name": "@nulltype/object-helper",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Object helper functions",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
@@ -19,6 +19,7 @@
   "license": "ISC",
   "homepage": "https://nulltype-dev.github.io/commons-js/features/object-helper",
   "files": [
-    "./dist"
+    "./dist",
+    "./README.md"
   ]
 }

@@ -18,8 +18,8 @@ import { has } from '@nulltype/object-helper'
 function someFunction(arg1: { myprop?: string }, someVar: string) {
   arg1[someVar] = 'test'
   // above line will result in error:
-  //   Element implicitly has an 'any' type 
-  //   because expression of type 'string' 
+  //   Element implicitly has an 'any' type
+  //   because expression of type 'string'
   //   can't be used to index type '{ myprop?: string | undefined; }'.
   //   No index signature with a parameter of type 'string' was found
   //   on type '{ myprop?: string | undefined; }'.ts(7053)
