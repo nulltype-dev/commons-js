@@ -1,5 +1,3 @@
-const listeners = Symbol('listeners')
-
 type ListenerMap = {
   [name: PropertyKey]: unknown[]
 }
@@ -13,14 +11,14 @@ type ListenerCollection<ListenerMapType> = Partial<
 >
 
 export class EventEmitter<ListenerMapType extends ListenerMap> {
-  private [listeners]: ListenerCollection<ListenerMapType> = {}
+  #listeners: ListenerCollection<ListenerMapType> = {}
 
   async emit<NameType extends keyof ListenerMapType>(
     name: NameType,
     ...args: ListenerMapType[NameType]
   ): Promise<void> {
     await Promise.all(
-      (this[listeners][name] ?? []).map((listener) => listener(...args)),
+      (this.#listeners[name] ?? []).map((listener) => listener(...args)),
     )
   }
 
@@ -28,13 +26,13 @@ export class EventEmitter<ListenerMapType extends ListenerMap> {
     name: NameType,
     listener: (...args: ListenerMapType[NameType]) => void,
   ): Unsubscribe {
-    const listenerList = this[listeners][name] ?? []
+    const listenerList = this.#listeners[name] ?? []
 
-    this[listeners][name] ??= []
-    this[listeners][name]!.push(listener as AnyListener)
+    this.#listeners[name] ??= []
+    this.#listeners[name]!.push(listener as AnyListener)
 
     return () => {
-      this[listeners][name] = this[listeners][name]!.filter(
+      this.#listeners[name] = this.#listeners[name]!.filter(
         (l) => l !== listener,
       )
     }

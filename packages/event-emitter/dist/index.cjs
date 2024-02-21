@@ -1,34 +1,40 @@
 'use strict';
 
-var __defProp = Object.defineProperty;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __publicField = (obj, key, value) => {
-  __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
-  return value;
+var __accessCheck = (obj, member, msg) => {
+  if (!member.has(obj))
+    throw TypeError("Cannot " + msg);
 };
-var _a;
-const listeners = Symbol("listeners");
+var __privateGet = (obj, member, getter) => {
+  __accessCheck(obj, member, "read from private field");
+  return getter ? getter.call(obj) : member.get(obj);
+};
+var __privateAdd = (obj, member, value) => {
+  if (member.has(obj))
+    throw TypeError("Cannot add the same private member more than once");
+  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+};
+var _listeners;
 class EventEmitter {
   constructor() {
-    __publicField(this, _a, {});
+    __privateAdd(this, _listeners, {});
   }
   async emit(name, ...args) {
     await Promise.all(
-      (this[listeners][name] ?? []).map((listener) => listener(...args))
+      (__privateGet(this, _listeners)[name] ?? []).map((listener) => listener(...args))
     );
   }
   subscribe(name, listener) {
-    var _a2;
-    this[listeners][name] ?? [];
-    (_a2 = this[listeners])[name] ?? (_a2[name] = []);
-    this[listeners][name].push(listener);
+    var _a;
+    __privateGet(this, _listeners)[name] ?? [];
+    (_a = __privateGet(this, _listeners))[name] ?? (_a[name] = []);
+    __privateGet(this, _listeners)[name].push(listener);
     return () => {
-      this[listeners][name] = this[listeners][name].filter(
+      __privateGet(this, _listeners)[name] = __privateGet(this, _listeners)[name].filter(
         (l) => l !== listener
       );
     };
   }
 }
-_a = listeners;
+_listeners = new WeakMap();
 
 exports.EventEmitter = EventEmitter;
