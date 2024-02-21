@@ -20,8 +20,19 @@ type AnyAggregateConstructor = AggregateConstructor<BaseAggregate<any>>
 type AnyEvent = BaseEvent<IAggregate<any>, any>
 
 const aggregates = new Map<string, AnyAggregateConstructor>()
+const aggregateVersionMap = new WeakMap<IAggregate<any>, number>()
 
-export const versionProp = Symbol('version')
+export const aggregateVersion = (aggregate: IAggregate<any>) => ({
+  bump() {
+    this.set(this.get() + 1)
+  },
+  get() {
+    return aggregateVersionMap.get(aggregate) ?? 0
+  },
+  set(version: number) {
+    aggregateVersionMap.set(aggregate, version)
+  },
+})
 
 export const Aggregate = (
   aggregateType: string,
@@ -48,7 +59,7 @@ export const Aggregate = (
       }
 
       public recordThat(event: AnyEvent) {
-        this[versionProp] += 1
+        aggregateVersion(this).bump()
         event.occuredIn(this)
         this.#applyEvent(event)
         this.#recordedEvents.push(event)
@@ -85,7 +96,7 @@ export const Aggregate = (
             throw new InvalidReplyEventVersion(this, event)
           }
 
-          this[versionProp] = event.version
+          aggregateVersion(this).set(event.version)
           this.#applyEvent(event)
         }
       }

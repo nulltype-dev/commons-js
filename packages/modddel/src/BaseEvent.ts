@@ -1,84 +1,46 @@
-import { getEventClass } from './decorators/Event'
+import { getEventData } from './decorators/Event'
 import { DidNotOccuredInAggregate } from './errors/DidNotOccuredInAggregate'
-import { EventNotDefined } from './errors/EventNotDefined'
 import { NotDecoratedEvent } from './errors/NotDecoratedEvent'
-import type {
-  AggregateId,
-  EventAggregate,
-  EventPayload,
-  IAggregate,
-  IEvent,
-} from './types'
-
-const factory = Symbol('createEvent')
-
-interface IEventData<PayloadType> {
-  aggregateId: any
-  aggregateType: string
-  eventType: string
-  version: number
-  occuredAt: number
-  payload: PayloadType
-}
-
-export const createEvent = <EventType extends BaseEvent<any, any>>(
-  data: IEventData<EventPayload<EventType>>,
-) => {
-  const EventClass = getEventClass(data.eventType)
-  const event = new EventClass(data.payload) as EventType
-  event[factory](data)
-
-  return event
-}
+import type { AggregateId, IAggregate, IEvent } from './types'
 
 export abstract class BaseEvent<
   AggregateType extends IAggregate<any>,
   PayloadType,
 > implements IEvent<AggregateType, PayloadType>
 {
-  #aggregateType?: string
-  #aggregateId?: AggregateId<AggregateType>
-  #version: number = 0
-  #occuredAt: number;
-
-  [factory](data: IEventData<PayloadType>) {
-    const { aggregateId, aggregateType, occuredAt, version } = data
-    this.#aggregateId = aggregateId
-    this.#aggregateType = aggregateType
-    this.#occuredAt = occuredAt
-    this.#version = version
-  }
-
   constructor(public readonly payload: PayloadType) {
-    this.#occuredAt = Date.now()
+    getEventData(this).occuredAt = Date.now()
   }
 
   get aggregateType(): string {
-    if (!this.#aggregateType) {
+    const type = getEventData(this).aggregateType
+    if (!type) {
       throw new DidNotOccuredInAggregate()
     }
 
-    return this.#aggregateType
+    return type
   }
 
   get version(): number {
-    if (this.#version === 0) {
+    const version = getEventData(this).version
+    if (!version) {
       throw new DidNotOccuredInAggregate()
     }
 
-    return this.#version
+    return version
   }
 
   get occuredAt(): number {
-    return this.#occuredAt
+    return getEventData(this).occuredAt
   }
 
   get aggregateId(): AggregateId<AggregateType> {
-    if (!this.#aggregateId) {
+    const id = getEventData(this).aggregateId
+    if (!id) {
       throw new DidNotOccuredInAggregate()
     }
 
-    return this.#aggregateId
+    return id
   }
 
   get type(): string {
@@ -93,8 +55,9 @@ export abstract class BaseEvent<
    * @internal
    */
   occuredIn(aggregate: AggregateType) {
-    this.#aggregateId = aggregate.aggregateId
-    this.#aggregateType = aggregate.type
-    this.#version = aggregate.version
+    const data = getEventData(this)
+    data.aggregateId = aggregate.aggregateId
+    data.aggregateType = aggregate.type
+    data.version = aggregate.version
   }
 }

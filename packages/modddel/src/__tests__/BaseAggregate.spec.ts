@@ -6,23 +6,19 @@ import {
   DecoratedAggregateWithMissingHandlers,
   DecoratedEvent,
   UndecoratedAggregate,
-  UndecoratedEvent,
 } from './test-subjects'
 import { HandlerNotDefined } from '../errors/HandlerNotDefined'
 import {
   Aggregate,
   asReplayableAggregate,
   getAggregateClass,
-  popEvents,
 } from '../decorators/Aggregate'
 import { BaseAggregate } from '../BaseAggregate'
 import { AlreadyDefined } from '../errors/AlreadyDefined'
-import type { IAggregate } from '../types'
-import { createEvent } from '../BaseEvent'
-import { InvalidReplyEventVersion } from '../errors/InvalidReplyEventVersion'
 import { createFromSnapshot, toSnapshot } from '../AggregateSnapshot'
 import { NotSnapshotable } from '../errors/NotSnapshotable'
 import { AggregateNotDefined } from '../errors/AggregateNotDefined'
+import { createEvent } from '../decorators/Event'
 
 describe('BaseAggregate', () => {
   describe('not decorated aggregate', () => {

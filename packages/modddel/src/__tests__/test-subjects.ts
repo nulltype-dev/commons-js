@@ -1,4 +1,3 @@
-import { P } from 'vitest/dist/reporters-trlZlObr'
 import { BaseAggregate } from '../BaseAggregate'
 import { BaseEvent } from '../BaseEvent'
 import { Aggregate } from '../decorators/Aggregate'

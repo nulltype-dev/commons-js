@@ -1,7 +1,7 @@
 import type { BaseAggregate } from './BaseAggregate'
-import { getAggregateClass, versionProp } from './decorators/Aggregate'
+import { aggregateVersion, getAggregateClass } from './decorators/Aggregate'
 import { NotSnapshotable } from './errors/NotSnapshotable'
-import type { AggregateId, IAggregate } from './types'
+import type { AggregateId } from './types'
 
 export interface ISnapshot<IdType, StateType> {
   id: IdType
@@ -39,7 +39,7 @@ export const createFromSnapshot = <
   }
 
   aggregate.fromSnapshot(state)
-  aggregate[versionProp] = version
+  aggregateVersion(aggregate).set(version)
 
   return aggregate as unknown as AggregateType
 }

@@ -1,12 +1,10 @@
-import { simpleCopy } from '@nulltype/object-helper'
+import { aggregateVersion } from './decorators/Aggregate'
 import { NotDecoratedAggregate } from './errors/NotDecoratedAggregate'
-import type { AggregateId, AnyEvent, IAggregate, IEvent } from './types'
-import { versionProp } from './decorators/Aggregate'
+import type { AnyEvent, IAggregate } from './types'
 
 export abstract class BaseAggregate<IdType = string>
   implements IAggregate<IdType>
 {
-  public [versionProp]: number = 0
   #aggregateId: IdType
 
   public constructor(aggregateId: IdType) {
@@ -22,7 +20,7 @@ export abstract class BaseAggregate<IdType = string>
   }
 
   public get version(): number {
-    return this[versionProp]
+    return aggregateVersion(this).get()
   }
 
   public get type(): string {
