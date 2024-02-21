@@ -4,7 +4,7 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: "NullType commons JS",
   description: "Set of reusable code for js projects",
-  head: [['link', { rel: 'icon', href: '/favicon.ico' }]],
+  head: [['link', { rel: 'icon', href: `${process.env.BASE_URL ?? '/'}favicon.ico` }]],
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [
