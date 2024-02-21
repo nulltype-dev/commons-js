@@ -4,6 +4,7 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: "NullType commons JS",
   description: "Set of reusable code for js projects",
+  head: [['link', { rel: 'icon', href: '/favicon.ico' }]],
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [
@@ -14,8 +15,9 @@ export default defineConfig({
       {
         text: 'Features',
         items: [
+          { text: 'Event emitter', link: '/features/event-emitter/' },
+          { text: 'Modddel', link: '/features/modddel/' },
           { text: 'Object helper', link: '/features/object-helper/' },
-          { text: 'Event emitter', link: '/features/event-emitter/' }
         ]
       }
     ],

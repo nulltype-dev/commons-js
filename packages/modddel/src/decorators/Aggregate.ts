@@ -2,7 +2,7 @@ import { type BaseAggregate } from '../BaseAggregate'
 import type { BaseEvent } from '../BaseEvent'
 import { AlreadyDefined } from '../errors/AlreadyDefined'
 import { HandlerNotDefined } from '../errors/HandlerNotDefined'
-import type { AggregateConstructor, IAggregate } from '../types'
+import type { AggregateConstructor, AnyEvent, IAggregate } from '../types'
 import { getEventHandler } from './When'
 import { InvalidReplyEventVersion } from '../errors/InvalidReplyEventVersion'
 import { AggregateNotDefined } from '../errors/AggregateNotDefined'
@@ -17,7 +17,6 @@ interface AggregateMixin {
 }
 
 type AnyAggregateConstructor = AggregateConstructor<BaseAggregate<any>>
-type AnyEvent = BaseEvent<IAggregate<any>, any>
 
 const aggregates = new Map<string, AnyAggregateConstructor>()
 const aggregateVersionMap = new WeakMap<IAggregate<any>, number>()

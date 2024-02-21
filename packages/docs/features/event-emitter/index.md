@@ -1,4 +1,4 @@
-# Event emitter
+# Event Emitter
 
 Simple event emitter with typehinting.
 

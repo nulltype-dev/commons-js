@@ -1,7 +1,6 @@
-import type { BaseAggregate } from './BaseAggregate'
 import { aggregateVersion, getAggregateClass } from './decorators/Aggregate'
 import { NotSnapshotable } from './errors/NotSnapshotable'
-import type { AggregateId } from './types'
+import type { AggregateId, IAggregate } from './types'
 
 export interface ISnapshot<IdType, StateType> {
   id: IdType
@@ -26,7 +25,7 @@ const isSnapshotable = <StateType>(
 
 export const createFromSnapshot = <
   StateType,
-  AggregateType extends BaseAggregate<any>,
+  AggregateType extends IAggregate<any>,
 >(
   snapshot: ISnapshot<AggregateId<AggregateType>, StateType>,
 ) => {
@@ -44,7 +43,7 @@ export const createFromSnapshot = <
   return aggregate as unknown as AggregateType
 }
 
-export const toSnapshot = <StateType, AggregateType extends BaseAggregate<any>>(
+export const toSnapshot = <StateType, AggregateType extends IAggregate<any>>(
   aggregate: AggregateType,
 ): ISnapshot<AggregateId<AggregateType>, StateType> => {
   if (!isSnapshotable<StateType>(aggregate)) {

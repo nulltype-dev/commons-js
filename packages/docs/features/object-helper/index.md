@@ -1,4 +1,4 @@
-# Object helper
+# Object Helper
 
 Functions for working with objects
 

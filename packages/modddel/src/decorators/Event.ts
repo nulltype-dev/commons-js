@@ -1,6 +1,7 @@
 import { AlreadyDefined } from '../errors/AlreadyDefined'
 import { EventNotDefined } from '../errors/EventNotDefined'
 import type {
+  AnyEvent,
   EventConstructor,
   EventPayload,
   IAggregate,
@@ -9,7 +10,7 @@ import type {
 
 type AnyEventConstructor = EventConstructor<IEvent<any, any>>
 
-interface ISerializedEvent<PayloadType> {
+export interface ISerializedEvent<PayloadType> {
   aggregateId: any
   aggregateType: string
   eventType: string
@@ -93,3 +94,12 @@ export const getEventClass = (eventType: string): AnyEventConstructor => {
 
   return EventClass
 }
+
+export const serializeEvent = (event: AnyEvent): ISerializedEvent<any> => ({
+  aggregateId: event.aggregateId,
+  aggregateType: event.aggregateType,
+  eventType: event.type,
+  occuredAt: event.occuredAt,
+  payload: event.payload,
+  version: event.version,
+})

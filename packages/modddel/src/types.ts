@@ -34,6 +34,6 @@ export type EventConstructor<EventType extends IEvent<any, any>> = {
   readonly TYPE: string
 }
 
-export type AnyEvent = IEvent<IAggregate<any>, unknown>
+export type AnyEvent = BaseEvent<IAggregate<any>, any>
 
 export {}
