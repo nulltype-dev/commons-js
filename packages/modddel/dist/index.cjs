@@ -52,6 +52,12 @@ class InvalidReplyEventVersion extends ModddelError {
   }
 }
 
+class AggregateNotDefined extends ModddelError {
+  constructor(type) {
+    super(`Aggregate "${type}" not defined`);
+  }
+}
+
 var __accessCheck$1 = (obj, member, msg) => {
   if (!member.has(obj))
     throw TypeError("Cannot " + msg);
@@ -147,6 +153,15 @@ const Aggregate = (aggregateType, options = {}) => {
     return AggregateClass;
   };
 };
+const getAggregateClass = (type) => {
+  const AggregateClass = aggregates.get(type);
+  if (!AggregateClass) {
+    throw new AggregateNotDefined(type);
+  }
+  return AggregateClass;
+};
+const popEvents = (aggregate) => aggregate.popEvents();
+const asReplayableAggregate = (aggregate) => aggregate;
 
 class NotDecoratedAggregate extends ModddelError {
   constructor() {
@@ -196,6 +211,12 @@ class BaseAggregate {
 }
 _aggregateId = new WeakMap();
 
+class EventNotDefined extends ModddelError {
+  constructor(type) {
+    super(`Event "${type}" not defined`);
+  }
+}
+
 const events = /* @__PURE__ */ new Map();
 const eventData = /* @__PURE__ */ new WeakMap();
 const getEventData = (event) => {
@@ -210,6 +231,17 @@ const getEventData = (event) => {
     eventData.set(event, data);
   }
   return data;
+};
+const createEvent = (serializedData) => {
+  const { aggregateId, aggregateType, eventType, occuredAt, payload, version } = serializedData;
+  const EventClass = getEventClass(eventType);
+  const event = new EventClass(payload);
+  const data = getEventData(event);
+  data.aggregateId = aggregateId;
+  data.aggregateType = aggregateType;
+  data.version = version;
+  data.occuredAt = occuredAt;
+  return event;
 };
 const Event = (eventType) => {
   if (events.has(eventType)) {
@@ -228,6 +260,21 @@ const Event = (eventType) => {
     return EventClass;
   };
 };
+const getEventClass = (eventType) => {
+  const EventClass = events.get(eventType);
+  if (!EventClass) {
+    throw new EventNotDefined(eventType);
+  }
+  return EventClass;
+};
+const serializeEvent = (event) => ({
+  aggregateId: event.aggregateId,
+  aggregateType: event.aggregateType,
+  eventType: event.type,
+  occuredAt: event.occuredAt,
+  payload: event.payload,
+  version: event.version
+});
 
 class DidNotOccuredInAggregate extends ModddelError {
   constructor() {
@@ -289,8 +336,90 @@ class BaseEvent {
   }
 }
 
+class NotSnapshotable extends ModddelError {
+  constructor(type) {
+    super(`Aggregate "${type}" must implement ISnapshotable.`);
+  }
+}
+
+const isSnapshotable = (aggregate) => Boolean(aggregate.createSnaphshot) && Boolean(aggregate.fromSnapshot) && aggregate.type && aggregate.aggregateId && aggregate.version !== void 0;
+const createFromSnapshot = (snapshot) => {
+  const { type, id, state, version } = snapshot;
+  const AggregateClass = getAggregateClass(type);
+  const aggregate = new AggregateClass(id);
+  if (!isSnapshotable(aggregate)) {
+    throw new NotSnapshotable(type);
+  }
+  aggregate.fromSnapshot(state);
+  aggregateVersion(aggregate).set(version);
+  return aggregate;
+};
+const toSnapshot = (aggregate) => {
+  if (!isSnapshotable(aggregate)) {
+    throw new NotSnapshotable(aggregate.type);
+  }
+  return {
+    id: aggregate.aggregateId,
+    state: aggregate.createSnaphshot(),
+    type: aggregate.type,
+    version: aggregate.version
+  };
+};
+
+class Repository {
+  constructor(options) {
+    this.options = options;
+  }
+  async save(aggregate) {
+    const { snapshotStorage, eventStorage } = this.options;
+    const events = popEvents(aggregate).map(serializeEvent);
+    if (!events.length) {
+      return;
+    }
+    if (eventStorage) {
+      await eventStorage.save(events);
+    }
+    if (snapshotStorage && isSnapshotable(aggregate) && await snapshotStorage.shouldCreateSnapshot(aggregate)) {
+      const snapshot = toSnapshot(aggregate);
+      await snapshotStorage.save(snapshot);
+    }
+  }
+  async load(aggregateType, aggregateId) {
+    let aggregate = void 0;
+    const { snapshotStorage, eventStorage } = this.options;
+    if (snapshotStorage) {
+      const snapshot = await snapshotStorage.load(
+        aggregateType,
+        aggregateId
+      );
+      if (snapshot) {
+        aggregate = createFromSnapshot(snapshot);
+      }
+    }
+    const currentVersion = aggregate?.version ?? 0;
+    let events = [];
+    if (eventStorage) {
+      events = await eventStorage.load(
+        aggregateType,
+        aggregateId,
+        currentVersion + 1
+      );
+    }
+    if (!events.length) {
+      return aggregate;
+    }
+    if (!aggregate) {
+      const AggregateClass = getAggregateClass(aggregateType);
+      aggregate = new AggregateClass(aggregateId);
+    }
+    asReplayableAggregate(aggregate).reply(events.map(createEvent));
+    return aggregate;
+  }
+}
+
 exports.Aggregate = Aggregate;
 exports.BaseAggregate = BaseAggregate;
 exports.BaseEvent = BaseEvent;
 exports.Event = Event;
+exports.Repository = Repository;
 exports.When = When;

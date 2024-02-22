@@ -14,7 +14,7 @@ export interface ISnapshotable<StateType> {
   fromSnapshot(snapshotType: StateType): void
 }
 
-const isSnapshotable = <StateType>(
+export const isSnapshotable = <StateType>(
   aggregate: any,
 ): aggregate is ISnapshotable<StateType> =>
   Boolean(aggregate.createSnaphshot) &&

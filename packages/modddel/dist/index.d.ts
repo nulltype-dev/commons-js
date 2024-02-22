@@ -1,3 +1,18 @@
+declare abstract class BaseEvent<AggregateType extends IAggregate<any>, PayloadType> implements IEvent<AggregateType, PayloadType> {
+    readonly payload: PayloadType;
+    constructor(payload: PayloadType);
+    get aggregateType(): string;
+    get version(): number;
+    get occuredAt(): number;
+    get aggregateId(): AggregateId<AggregateType>;
+    get type(): string;
+    static get TYPE(): string;
+    /**
+     * @internal
+     */
+    occuredIn(aggregate: AggregateType): void;
+}
+
 interface IAggregate<IdType> {
     readonly aggregateId: IdType;
     readonly type: string;
@@ -20,7 +35,7 @@ type EventConstructor<EventType extends IEvent<any, any>> = {
     new (...args: any[]): EventType;
     readonly TYPE: string;
 };
-type AnyEvent$1 = IEvent<IAggregate<any>, unknown>;
+type AnyEvent = BaseEvent<IAggregate<any>, any>;
 
 declare abstract class BaseAggregate<IdType = string> implements IAggregate<IdType> {
     #private;
@@ -29,29 +44,13 @@ declare abstract class BaseAggregate<IdType = string> implements IAggregate<IdTy
     get aggregateId(): IdType;
     get version(): number;
     get type(): string;
-    protected recordThat(event: AnyEvent$1): void;
-}
-
-declare abstract class BaseEvent<AggregateType extends IAggregate<any>, PayloadType> implements IEvent<AggregateType, PayloadType> {
-    readonly payload: PayloadType;
-    constructor(payload: PayloadType);
-    get aggregateType(): string;
-    get version(): number;
-    get occuredAt(): number;
-    get aggregateId(): AggregateId<AggregateType>;
-    get type(): string;
-    static get TYPE(): string;
-    /**
-     * @internal
-     */
-    occuredIn(aggregate: AggregateType): void;
+    protected recordThat(event: AnyEvent): void;
 }
 
 interface AggregateOptions {
     ignoreMissingHandlers?: boolean;
 }
 type AnyAggregateConstructor = AggregateConstructor<BaseAggregate<any>>;
-type AnyEvent = BaseEvent<IAggregate<any>, any>;
 declare const Aggregate: (aggregateType: string, options?: AggregateOptions) => <ConstructorType extends AnyAggregateConstructor>(Constructor: ConstructorType) => {
     new (...args: any[]): {
         "__#2@#recordedEvents": AnyEvent[];
@@ -68,6 +67,14 @@ declare const Aggregate: (aggregateType: string, options?: AggregateOptions) => 
 } & ConstructorType;
 
 type AnyEventConstructor = EventConstructor<IEvent<any, any>>;
+interface ISerializedEvent<PayloadType> {
+    aggregateId: any;
+    aggregateType: string;
+    eventType: string;
+    version: number;
+    occuredAt: number;
+    payload: PayloadType;
+}
 declare const Event: (eventType: string) => <ContructorType extends AnyEventConstructor>(Constructor: ContructorType) => {
     new (...args: any[]): {
         readonly type: string;
@@ -82,4 +89,35 @@ declare const Event: (eventType: string) => <ContructorType extends AnyEventCons
 
 declare const When: (Constructor: EventConstructor<IEvent<IAggregate<any>, any>>) => (target: any, propName: string) => void;
 
-export { Aggregate, BaseAggregate, BaseEvent, Event, When };
+interface ISnapshot<IdType, StateType> {
+    id: IdType;
+    type: string;
+    version: number;
+    state: StateType;
+}
+interface ISnapshotable<StateType> {
+    createSnaphshot(): StateType;
+    fromSnapshot(snapshotType: StateType): void;
+}
+
+interface ISnapshotStorage {
+    shouldCreateSnapshot<AggregateType extends IAggregate<any>>(aggregate: AggregateType): Promise<boolean>;
+    save(snapshot: ISnapshot<any, any>): Promise<void>;
+    load<IdType>(aggregateType: string, aggregateId: IdType): Promise<ISnapshot<IdType, any> | undefined>;
+}
+interface IEventStorage {
+    save(events: ISerializedEvent<any>[]): Promise<void>;
+    load<IdType>(aggregateType: string, aggregateId: IdType, sinceVersion: number): Promise<ISerializedEvent<any>[]>;
+}
+interface RepositoryOptions {
+    snapshotStorage?: ISnapshotStorage;
+    eventStorage?: IEventStorage;
+}
+declare class Repository {
+    private options;
+    constructor(options: RepositoryOptions);
+    save(aggregate: IAggregate<any>): Promise<void>;
+    load<AggregateType extends BaseAggregate<any>>(aggregateType: string, aggregateId: AggregateId<AggregateType>): Promise<AggregateType | undefined>;
+}
+
+export { Aggregate, BaseAggregate, BaseEvent, Event, type IEventStorage, type ISnapshot, type ISnapshotStorage, type ISnapshotable, Repository, When };

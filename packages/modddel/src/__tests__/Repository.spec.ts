@@ -2,12 +2,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { IEventStorage, ISnapshotStorage } from '../Repository'
 import { Repository } from '../Repository'
 import type { ISnapshot } from '../AggregateSnapshot'
-import { DecoratedAggregate } from './test-subjects'
+import {
+  DecoratedAggregate,
+  DecoratedAggregateWithMissingHandlers,
+  SimpleAggregate,
+} from './test-subjects'
 import type { ISerializedEvent } from '../decorators/Event'
 
 const snapshotStore: ISnapshot<any, any>[] = []
 const eventStore: ISerializedEvent<any>[] = []
-const snapshotStorageOnly: ISnapshotStorage = {
+const everyVersionSnapshot: ISnapshotStorage = {
   async load(type, id) {
     return snapshotStore.find((s) => s.type === type && s.id === id)
   },
@@ -27,7 +31,7 @@ const snapshotStorageOnly: ISnapshotStorage = {
 }
 
 const snapshotAfter3Versions: ISnapshotStorage = {
-  ...snapshotStorageOnly,
+  ...everyVersionSnapshot,
   shouldCreateSnapshot: async (aggregate) => {
     const snapshot = snapshotStore.find(
       (s) => s.type === aggregate.type && s.id === aggregate.aggregateId,
@@ -60,7 +64,7 @@ describe('Repository', () => {
     beforeEach(() => {
       snapshotStore.splice(0, snapshotStore.length)
       repository = new Repository({
-        snapshotStorage: snapshotStorageOnly,
+        snapshotStorage: everyVersionSnapshot,
       })
     })
 
@@ -258,6 +262,21 @@ describe('Repository', () => {
           type: 'DecoratedAggregate',
           version: 4,
         })
+      })
+
+      it('should not save snapshot when aggregate is not snapshotable', async () => {
+        const repository = new Repository({
+          eventStorage,
+          snapshotStorage: everyVersionSnapshot,
+        })
+
+        const aggreagte = new SimpleAggregate('simple')
+        aggreagte.makeItSimple()
+
+        await repository.save(aggreagte)
+
+        expect(snapshotStore.length).toBe(0)
+        expect(eventStore.length).toBe(1)
       })
     })
   })

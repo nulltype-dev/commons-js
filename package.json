@@ -16,6 +16,7 @@
   "workspaces": [
     "packages/object-helper",
     "packages/event-emitter",
+    "packages/modddel",
     "packages/docs"
   ],
   "devDependencies": {

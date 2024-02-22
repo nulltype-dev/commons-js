@@ -1,6 +1,6 @@
 {
   "name": "@nulltype/modddel",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "DDD Model framework",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",

@@ -79,10 +79,22 @@ class DecoratedAggregateWithMissingHandlers extends BaseAggregate {
   }
 }
 
+@Event('SimpleEvent')
+class SimpleEvent extends BaseEvent<SimpleAggregate, void> {}
+
+@Aggregate('SimpleAggregate', { ignoreMissingHandlers: true })
+class SimpleAggregate extends BaseAggregate {
+  makeItSimple() {
+    this.recordThat(new SimpleEvent())
+  }
+}
+
 export {
   UndecoratedAggregate,
   UndecoratedEvent,
   DecoratedAggregate,
   DecoratedAggregateWithMissingHandlers,
   DecoratedEvent,
+  SimpleAggregate,
+  SimpleEvent,
 }

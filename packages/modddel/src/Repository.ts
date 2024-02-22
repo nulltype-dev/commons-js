@@ -1,5 +1,9 @@
 import type { ISnapshot } from './AggregateSnapshot'
-import { createFromSnapshot, toSnapshot } from './AggregateSnapshot'
+import {
+  createFromSnapshot,
+  isSnapshotable,
+  toSnapshot,
+} from './AggregateSnapshot'
 import type { BaseAggregate } from './BaseAggregate'
 import {
   asReplayableAggregate,
@@ -55,6 +59,7 @@ export class Repository {
 
     if (
       snapshotStorage &&
+      isSnapshotable(aggregate) &&
       (await snapshotStorage.shouldCreateSnapshot(aggregate))
     ) {
       const snapshot = toSnapshot(aggregate)
