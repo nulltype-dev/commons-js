@@ -10,6 +10,13 @@ type ListenerCollection<ListenerMapType> = Partial<
   Record<keyof ListenerMapType, AnyListener[]>
 >
 
+export interface EventSubscriber<ListenerMapType extends ListenerMap> {
+  subscribe<NameType extends keyof ListenerMapType>(
+    name: NameType,
+    listener: (...args: ListenerMapType[NameType]) => void | Promise<void>,
+  ): Unsubscribe
+}
+
 export class EventEmitter<ListenerMapType extends ListenerMap> {
   #listeners: ListenerCollection<ListenerMapType> = {}
 
@@ -24,7 +31,7 @@ export class EventEmitter<ListenerMapType extends ListenerMap> {
 
   subscribe<NameType extends keyof ListenerMapType>(
     name: NameType,
-    listener: (...args: ListenerMapType[NameType]) => void,
+    listener: (...args: ListenerMapType[NameType]) => Promise<void> | void,
   ): Unsubscribe {
     const listenerList = this.#listeners[name] ?? []
 
@@ -35,6 +42,17 @@ export class EventEmitter<ListenerMapType extends ListenerMap> {
       this.#listeners[name] = this.#listeners[name]!.filter(
         (l) => l !== listener,
       )
+    }
+  }
+
+  getSubscriber(): EventSubscriber<ListenerMapType> {
+    return {
+      subscribe: <NameType extends keyof ListenerMapType>(
+        name: NameType,
+        listener: (...args: ListenerMapType[NameType]) => Promise<void> | void,
+      ) => {
+        return this.subscribe(name, listener)
+      },
     }
   }
 }

@@ -58,28 +58,14 @@ class AggregateNotDefined extends ModddelError {
   }
 }
 
-var __accessCheck$1 = (obj, member, msg) => {
-  if (!member.has(obj))
-    throw TypeError("Cannot " + msg);
+var __typeError$1 = (msg) => {
+  throw TypeError(msg);
 };
-var __privateGet$1 = (obj, member, getter) => {
-  __accessCheck$1(obj, member, "read from private field");
-  return getter ? getter.call(obj) : member.get(obj);
-};
-var __privateAdd$1 = (obj, member, value) => {
-  if (member.has(obj))
-    throw TypeError("Cannot add the same private member more than once");
-  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-};
-var __privateSet$1 = (obj, member, value, setter) => {
-  __accessCheck$1(obj, member, "write to private field");
-  setter ? setter.call(obj, value) : member.set(obj, value);
-  return value;
-};
-var __privateMethod = (obj, member, method) => {
-  __accessCheck$1(obj, member, "access private method");
-  return method;
-};
+var __accessCheck$1 = (obj, member, msg) => member.has(obj) || __typeError$1("Cannot " + msg);
+var __privateGet$1 = (obj, member, getter) => (__accessCheck$1(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+var __privateAdd$1 = (obj, member, value) => member.has(obj) ? __typeError$1("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet$1 = (obj, member, value, setter) => (__accessCheck$1(obj, member, "write to private field"), member.set(obj, value), value);
+var __privateMethod = (obj, member, method) => (__accessCheck$1(obj, member, "access private method"), method);
 const aggregates = /* @__PURE__ */ new Map();
 const aggregateVersionMap = /* @__PURE__ */ new WeakMap();
 const aggregateVersion = (aggregate) => ({
@@ -99,11 +85,11 @@ const Aggregate = (aggregateType, options = {}) => {
     throw new AlreadyDefined(`Aggregate "${aggregateType}"`);
   }
   return (Constructor) => {
-    var _recordedEvents, _applyEvent, applyEvent_fn;
+    var _recordedEvents, _AggregateClass_instances, applyEvent_fn;
     class AggregateClass extends Constructor {
       constructor() {
         super(...arguments);
-        __privateAdd$1(this, _applyEvent);
+        __privateAdd$1(this, _AggregateClass_instances);
         __privateAdd$1(this, _recordedEvents, []);
       }
       static get TYPE() {
@@ -115,7 +101,7 @@ const Aggregate = (aggregateType, options = {}) => {
       recordThat(event) {
         aggregateVersion(this).bump();
         event.occuredIn(this);
-        __privateMethod(this, _applyEvent, applyEvent_fn).call(this, event);
+        __privateMethod(this, _AggregateClass_instances, applyEvent_fn).call(this, event);
         __privateGet$1(this, _recordedEvents).push(event);
       }
       popEvents() {
@@ -133,12 +119,12 @@ const Aggregate = (aggregateType, options = {}) => {
             throw new InvalidReplyEventVersion(this, event);
           }
           aggregateVersion(this).set(event.version);
-          __privateMethod(this, _applyEvent, applyEvent_fn).call(this, event);
+          __privateMethod(this, _AggregateClass_instances, applyEvent_fn).call(this, event);
         }
       }
     }
     _recordedEvents = new WeakMap();
-    _applyEvent = new WeakSet();
+    _AggregateClass_instances = new WeakSet();
     applyEvent_fn = function(event) {
       const methodName = getEventHandler(Constructor, event.type);
       if (!methodName) {
@@ -169,28 +155,17 @@ class NotDecoratedAggregate extends ModddelError {
   }
 }
 
-var __accessCheck = (obj, member, msg) => {
-  if (!member.has(obj))
-    throw TypeError("Cannot " + msg);
+var __typeError = (msg) => {
+  throw TypeError(msg);
 };
-var __privateGet = (obj, member, getter) => {
-  __accessCheck(obj, member, "read from private field");
-  return getter ? getter.call(obj) : member.get(obj);
-};
-var __privateAdd = (obj, member, value) => {
-  if (member.has(obj))
-    throw TypeError("Cannot add the same private member more than once");
-  member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
-};
-var __privateSet = (obj, member, value, setter) => {
-  __accessCheck(obj, member, "write to private field");
-  setter ? setter.call(obj, value) : member.set(obj, value);
-  return value;
-};
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), member.set(obj, value), value);
 var _aggregateId;
 class BaseAggregate {
   constructor(aggregateId) {
-    __privateAdd(this, _aggregateId, void 0);
+    __privateAdd(this, _aggregateId);
     __privateSet(this, _aggregateId, aggregateId);
   }
   static get TYPE() {
