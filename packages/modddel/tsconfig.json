@@ -6,7 +6,6 @@
     "strict": true,
     "moduleResolution": "node",
     "esModuleInterop": true,
-    "experimentalDecorators": true,
-    "rootDir": "./src",
+    "rootDir": "./src"
   }
 }

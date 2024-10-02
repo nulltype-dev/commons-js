@@ -33,8 +33,6 @@ export class EventEmitter<ListenerMapType extends ListenerMap> {
     name: NameType,
     listener: (...args: ListenerMapType[NameType]) => Promise<void> | void,
   ): Unsubscribe {
-    const listenerList = this.#listeners[name] ?? []
-
     this.#listeners[name] ??= []
     this.#listeners[name]!.push(listener as AnyListener)
 

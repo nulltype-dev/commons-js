@@ -1,39 +1,109 @@
-import type { BaseEvent } from './BaseEvent'
-
-export interface IAggregate<IdType> {
-  readonly aggregateId: IdType
-  readonly type: string
-  readonly version: number
+interface ActionThis<StateT, EventsT> {
+  state(): Readonly<StateT>
+  recordThat: <NameT extends keyof EventsT>(
+    eventName: NameT,
+    payload: EventsT[NameT],
+  ) => void
 }
 
-export type AggregateConstructor<AggregateType extends IAggregate<any>> = {
-  new (...args: any[]): AggregateType
-  readonly TYPE: string
+export interface IEvent<PayloadT = unknown, NameT = string> {
+  name: NameT
+  payload: PayloadT
 }
 
-export type AggregateId<AggregateType> =
-  AggregateType extends IAggregate<any> ? AggregateType['aggregateId'] : never
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyArgs = any[]
 
-export interface IEvent<AggregateType extends IAggregate<any>, PayloadType> {
-  readonly aggregateId: AggregateId<AggregateType>
-  readonly aggregateType: string
-  readonly type: string
-  readonly version: number
-  readonly occuredAt: number
-  readonly payload: PayloadType
+type Action<StateT, EventsT, ArgsT extends AnyArgs> = (
+  this: ActionThis<StateT, EventsT>,
+  ...args: ArgsT
+) => void
+
+export type MethodsRecord = {
+  [k in string]: AnyArgs
 }
 
-export type EventAggregate<EventType> =
-  EventType extends IEvent<infer AggregateType, any> ? AggregateType : never
-
-export type EventPayload<EventType> =
-  EventType extends IEvent<any, infer PayloadType> ? PayloadType : never
-
-export type EventConstructor<EventType extends IEvent<any, any>> = {
-  new (...args: any[]): EventType
-  readonly TYPE: string
+type EventsOptions<StateT, EventsT> = {
+  [k in keyof EventsT]: (
+    this: {
+      state: StateT
+    },
+    event: IEvent<EventsT[k], k>,
+  ) => void
 }
 
-export type AnyEvent = BaseEvent<IAggregate<any>, any>
+export interface AggregateOptions<
+  StateT = {},
+  ActionsT extends MethodsRecord = {},
+  EventsT = {},
+> {
+  name: string
+  initialState: () => StateT
+  events?: EventsOptions<StateT, EventsT>
+  actions?: {
+    [key in keyof ActionsT]: Action<StateT, EventsT, ActionsT[key]>
+  }
+}
 
-export {}
+export type AggregateExposedActions<ActionsT extends MethodsRecord = {}> = {
+  [key in keyof ActionsT]: (...args: ActionsT[key]) => void
+}
+
+type AggregateBaseInstance = {
+  id: () => string
+  [Symbol.dispose]: () => void
+}
+
+export type AggregateInstance<
+  _StateT = {},
+  ActionsT extends MethodsRecord = {},
+  _EventsT = {},
+> = AggregateBaseInstance & AggregateExposedActions<ActionsT>
+
+export type AggregateDefinition<
+  StateT = {},
+  ActionsT extends MethodsRecord = {},
+  EventsT = {},
+> = {
+  name(): string
+  create(id: string): AggregateInstance<StateT, ActionsT, EventsT>
+}
+
+export type GetAggregateTypes<AggregateDefinitionT> =
+  AggregateDefinitionT extends AggregateDefinition<
+    infer StateT,
+    infer ActionsT,
+    infer EventsT
+  >
+    ? [StateT, ActionsT, EventsT]
+    : [{}, {}, {}]
+
+export type GetAggregateInstance<AggregateDefinitionT> =
+  AggregateDefinitionT extends AggregateDefinition<
+    infer StateT,
+    infer ActionsT,
+    infer EventsT
+  >
+    ? ReturnType<AggregateDefinition<StateT, ActionsT, EventsT>['create']>
+    : never
+
+export type GetAggregateState<AggregateDefinitionT> =
+  GetAggregateTypes<AggregateDefinitionT>[0]
+
+export type GetAggregateActions<AggregateDefinitionT> =
+  GetAggregateTypes<AggregateDefinitionT>[1]
+
+export type GetAggregateEvents<AggregateDefinitionT> =
+  GetAggregateTypes<AggregateDefinitionT>[2]
+
+export type GetAggregateEventNames<AggregateDefinitionT> =
+  keyof GetAggregateTypes<AggregateDefinitionT>[2]
+
+export type GetAggregateOptions<AggregateDefinitionT> =
+  AggregateDefinitionT extends AggregateDefinition<
+    infer StateT,
+    infer ActionsT,
+    infer EventsT
+  >
+    ? AggregateOptions<StateT, ActionsT, EventsT>
+    : never

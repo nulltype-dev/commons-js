@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import { EventEmitter } from '../EventEmitter'
-import { emit } from 'process'
 
 const createEmitter = () => {
   const emitter = new EventEmitter<{
