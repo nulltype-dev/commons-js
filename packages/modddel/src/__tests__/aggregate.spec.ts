@@ -159,6 +159,7 @@ describe('Defining aggregate root', () => {
             {
               version: 1,
               name: 'NumbersAdded',
+              occuredAt: Date.now(),
               payload: {
                 a: 1,
                 b: 2,
@@ -184,6 +185,7 @@ describe('Defining aggregate root', () => {
           {
             version: 1,
             name: 'NumbersAdded',
+            occuredAt: Date.now() - 10,
             payload: {
               a: 1,
               b: 2,
@@ -192,6 +194,7 @@ describe('Defining aggregate root', () => {
           {
             version: 2,
             name: 'NumbersAdded',
+            occuredAt: Date.now(),
             payload: {
               a: 1,
               b: 1,

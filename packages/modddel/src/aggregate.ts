@@ -35,8 +35,8 @@ export function defineAggregateRoot<
               name: NameT,
               payload: EventsT[NameT],
             ) => {
-              const event: IEvent<EventsT[NameT], NameT> = {
-                name,
+              const event: IEvent<EventsT[NameT]> = {
+                name: String(name),
                 payload,
               }
 

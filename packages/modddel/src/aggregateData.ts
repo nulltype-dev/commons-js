@@ -1,20 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { InstanceDoesNotExistError } from './errors'
 import type {
   AggregateDefinition,
   AggregateInstance,
   AggregateOptions,
-  GetAggregateEventNames,
-  GetAggregateEvents,
   GetAggregateInstance,
   GetAggregateOptions,
+  GetAggregateState,
+  IAggregateEvent,
+  IAggregateEvents,
   IEvent,
+  ISnapshot,
   MethodsRecord,
 } from './types'
-
-interface IAggregateEvent<EventsT, NameT extends keyof EventsT>
-  extends IEvent<EventsT[NameT], NameT> {
-  version: number
-}
+import { areEventsContinous, EventSorter } from './utils'
 
 interface AggregateData<StateT, EventsT> {
   state: StateT
@@ -78,7 +77,7 @@ export const aggregateData = <StateT, ActionsT extends MethodsRecord, EventsT>(
 ) => {
   const data = instance && aggregatesData.get(instance)
   if (!data) {
-    throw new Error('disposed')
+    throw new InstanceDoesNotExistError()
   }
 
   return data as AggregateData<StateT, EventsT>
@@ -91,17 +90,18 @@ export const recordEvent = <
   NameT extends keyof EventsT,
 >(
   instance: AggregateInstance<StateT, ActionsT, EventsT> | null,
-  event: IEvent<EventsT[NameT], NameT>,
+  event: IEvent<EventsT[NameT]>,
 ): void => {
   const data = instance && aggregatesData.get(instance)
   if (!data) {
-    throw new Error('Instance has been disposed')
+    throw new InstanceDoesNotExistError()
   }
 
   data.version += 1
   data.recordedEvents.push({
     name: event.name,
     payload: event.payload,
+    occuredAt: Date.now(),
     version: data.version,
   })
 }
@@ -109,7 +109,7 @@ export const recordEvent = <
 export const popRecordedEvents = (instance: AggregateInstance) => {
   const data = aggregatesData.get(instance)
   if (!data) {
-    throw new Error('Instance has been disposed')
+    throw new InstanceDoesNotExistError()
   }
 
   const events = data.recordedEvents
@@ -118,23 +118,23 @@ export const popRecordedEvents = (instance: AggregateInstance) => {
   return events
 }
 
-type IAggregateEvents<DefinitionT> = {
-  [k in GetAggregateEventNames<DefinitionT>]: IAggregateEvent<
-    GetAggregateEvents<DefinitionT>,
-    k
-  >
-}[GetAggregateEventNames<DefinitionT>]
-
 export const loadAggregate = <
   DefinitionT extends AggregateDefinition<any, any, any>,
 >(
   aggregateName: string,
   id: string,
   events: IAggregateEvents<DefinitionT>[] = [],
+  snapshot: ISnapshot<GetAggregateState<DefinitionT>> | null = null,
 ) => {
   const { definition: Aggregate, options } =
     getAggregateDefinition<DefinitionT>(aggregateName)
   const instance = Aggregate.create(id) as GetAggregateInstance<DefinitionT>
+  const data = aggregateData(instance)
+
+  if (snapshot) {
+    data.version = snapshot.version
+    data.state = JSON.parse(JSON.stringify(snapshot.state))
+  }
 
   if (!events.length) {
     return instance
@@ -146,9 +146,25 @@ export const loadAggregate = <
     )
   }
 
-  const state = aggregateData(instance).state
+  const newEvents = (
+    snapshot
+      ? events.filter((event) => event.version > snapshot.version)
+      : events
+  ).toSorted(EventSorter.byVersion)
 
-  for (const event of events) {
+  if (!newEvents.length) {
+    return instance
+  }
+
+  if (newEvents[0].version !== (snapshot?.version ?? 0) + 1) {
+    throw new Error("Loaded events doesn't start right after snapshot.")
+  }
+
+  if (!areEventsContinous(newEvents)) {
+    throw new Error('Loaded events are not continous.')
+  }
+
+  for (const event of newEvents) {
     const handler = options.events?.[event.name]
 
     if (!handler) {
@@ -159,13 +175,15 @@ export const loadAggregate = <
 
     handler.call(
       {
-        state,
+        state: data.state,
       },
       {
-        name: event.name,
+        name: String(event.name),
         payload: event.payload,
       },
     )
+
+    data.version = event.version
   }
 
   return instance
