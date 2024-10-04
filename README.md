@@ -21,3 +21,7 @@ npm i @nulltype/event-emitter
 ```
 
 [See more](https://nulltype-dev.github.io/commons-js/features/event-emitter/)
+
+### Modddel
+
+Modddel was moved to separeate [repository](https://github.com/nulltype-dev/modddel).
